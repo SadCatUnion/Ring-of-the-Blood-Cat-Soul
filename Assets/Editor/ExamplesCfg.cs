@@ -26,6 +26,7 @@ public class ExamplesCfg
                 //直接指定的类型
                 typeof(JsEnv),
                 typeof(ILoader),
+                typeof(JsBehaviour),
                 typeof(System.Array),
                 typeof(UnityEngine.Events.UnityEvent),
             };

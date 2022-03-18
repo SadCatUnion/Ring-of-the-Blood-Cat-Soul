@@ -1,3 +1,29 @@
-import {UnityEngine} from "csharp"
+import {JsBehaviour, UnityEngine} from "csharp"
 
-UnityEngine.Debug.Log("Hello Ring!!!")
+class GameRoot {
+    bindTo: JsBehaviour
+    constructor(bindTo: JsBehaviour) {
+        this.bindTo = bindTo;
+        this.bindTo.JsStart = () => this.onStart();
+        this.bindTo.JsUpdate = () => this.onUpdate();
+        this.bindTo.JsOnDestroy = () => this.onDestroy();
+    }
+
+    onStart() {
+        
+    }
+    
+    onUpdate() {
+        
+    }
+    
+    onDestroy() {
+
+    }
+}
+
+function init(bindTo: JsBehaviour): void {
+    new GameRoot(bindTo)
+}
+
+export {init}

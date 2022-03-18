@@ -4,6 +4,10 @@
   "description": "ts project",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "postbuild": "node copyJsFile.js output ../Assets/StreamingAssets"
+    "postbuild": "node copyJsFile.js output ../Assets/StreamingAssets",
+    "esbuild": "node esbuild.config.js"
+  },
+  "dependencies": {
+    "esbuild": "^0.14.27"
   }
 }
