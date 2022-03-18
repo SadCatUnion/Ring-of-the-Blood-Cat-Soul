@@ -1,9 +1,6 @@
 import {JsBehaviour, UnityEngine} from "csharp"
 import {HelloWorld} from "TESTMod/MyMod"
 
-UnityEngine.Debug.Log("Hello Ring!!!")
-HelloWorld()
-
 class GameRoot {
     bindTo: JsBehaviour
     constructor(bindTo: JsBehaviour) {
@@ -14,7 +11,7 @@ class GameRoot {
     }
 
     onStart() {
-        
+
     }
     
     onUpdate() {
