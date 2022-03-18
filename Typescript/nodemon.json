@@ -1,0 +1,7 @@
+{
+    "watch": ["SRC"],
+    "ignore": ["SRC/**/*.test.ts"],
+    "ext": "ts,mjs,js,json,graphql",
+    "exec": "etsc && node copyJsFile.js output ../Assets/StreamingAssets",
+    "legacyWatch": true
+  }
