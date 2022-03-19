@@ -17,29 +17,29 @@ public class JsBehaviour : MonoBehaviour
 
     private void OnEnable()
     {
-        if (jsEnv == null) jsEnv = new JsEnv(new GameScriptLoader(""), 9229);
+        jsEnv = GlobalJSEnv.Env;
         var varname = "m_" + Time.frameCount;
-        var init = jsEnv.Eval<ModuleInit>("const "+varname+" = require('" + ModuleName + "'); "+varname+".init;");
+        var init = jsEnv.Eval<ModuleInit>($"const {varname} = require('{ModuleName}'); {varname}.init;");
 
-        if (init != null) init(this);
+        init?.Invoke(this);
 
         Application.runInBackground = true;
     }
 
     private void OnDisable()
     {
-        if (JsOnDestroy != null) JsOnDestroy();
+        JsOnDestroy?.Invoke();
     }
 
     void Start()
     {
-        if (JsStart != null) JsStart();
+        JsStart?.Invoke();
     }
 
     void Update()
     {
         jsEnv.Tick();
-        if (JsUpdate != null) JsUpdate();
+        JsUpdate?.Invoke();
     }
 
     void OnDestroy()
