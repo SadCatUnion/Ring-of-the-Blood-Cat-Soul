@@ -10,19 +10,52 @@
 <body>
     <div id="App">
         <el-row :gutter="10">
-            <el-col :xs="8" :sm="8" :md="8" >
-                <ncform :form-schema="formSchema" form-name="form1" v-model="formSchema.value" @submit="submit()">
-                </ncform>
-                <el-button @click="submit()">Submit</el-button>
+            <el-col :xs="4" :sm="4" :md="4">
+                <h5>数据表</h5>
+                <el-divider></el-divider>
+                <el-menu default-active="2" class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose">
+
+                    <el-menu-item index="2">
+                        <i class="el-icon-menu"></i>
+                        <span slot="title">表1</span>
+                    </el-menu-item>
+                    <el-menu-item index="3">
+                        <i class="el-icon-document"></i>
+                        <span slot="title">表2</span>
+                    </el-menu-item>
+                    <el-menu-item index="4">
+                        <i class="el-icon-setting"></i>
+                        <span slot="title">表3</span>
+                    </el-menu-item>
+                </el-menu>
+
             </el-col>
-            <el-col :xs="16" :sm="16" :md="16" >
+
+            <el-col :xs="10" :sm="10" :md="10">
+                <h5>Content</h5>
+                <el-divider></el-divider>
+                <el-menu default-active="2" class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose">
+                    <el-menu-item class="box-card" v-for="v in tableData">
+                        <span><strong>ID:</strong>{{v.ID}}</span><span style="width: 40;"></span>
+                        <span><strong>Key:</strong>{{v.Key}}</span><span style="width: 40;"></span>
+                        <span><strong>Desc:</strong>{{v.Desc}}</span><span style="width: 40;"></span>
+                    </el-menu-item>
+                </el-menu>
+                
+
+            </el-col>
+
+            <el-col :xs="10" :sm="10" :md="10">
+                <h5>Inspector</h5>
+                <el-divider></el-divider>
                 <ncform :form-schema="formSchema" form-name="form2" v-model="formSchema.value" @submit="submit()">
                 </ncform>
-                <el-button @click="submit()">Submit</el-button>
+                <el-divider></el-divider>
+                <el-button @click="submit()">Save</el-button>
             </el-col>
 
         </el-row>
-        
+
     </div>
     <script src="./node_modules/vue/dist/vue.min.js"></script>
     <script src="./node_modules/axios/dist/axios.min.js"></script>
