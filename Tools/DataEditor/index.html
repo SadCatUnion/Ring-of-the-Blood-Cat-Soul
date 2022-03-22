@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Data-Editor</title>
+    <link rel="stylesheet" href="./node_modules/element-ui/lib/theme-chalk/index.css">
+</head>
+
+<body>
+    <div id="App">
+        <el-row :gutter="10">
+            <el-col :xs="8" :sm="8" :md="8" >
+                <ncform :form-schema="formSchema" form-name="form1" v-model="formSchema.value" @submit="submit()">
+                </ncform>
+                <el-button @click="submit()">Submit</el-button>
+            </el-col>
+            <el-col :xs="16" :sm="16" :md="16" >
+                <ncform :form-schema="formSchema" form-name="form2" v-model="formSchema.value" @submit="submit()">
+                </ncform>
+                <el-button @click="submit()">Submit</el-button>
+            </el-col>
+
+        </el-row>
+        
+    </div>
+    <script src="./node_modules/vue/dist/vue.min.js"></script>
+    <script src="./node_modules/axios/dist/axios.min.js"></script>
+    <script src="./node_modules/@ncform/ncform-common/dist/ncformCommon.min.js"></script>
+    <script src="./node_modules/@ncform/ncform/dist/vueNcform.min.js"></script>
+    <script src="./node_modules/element-ui/lib/index.js"></script>
+    <script src="./node_modules/@ncform/ncform-theme-elementui/dist/ncformStdComps.min.js"></script>
+    <script type="text/javascript" src="./SRC/index.js"></script>
+</body>
+
+</html>
