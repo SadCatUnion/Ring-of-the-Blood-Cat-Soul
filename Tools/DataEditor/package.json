@@ -13,7 +13,8 @@
     "@ncform/ncform-common": "^1.7.9",
     "@ncform/ncform-theme-elementui": "^1.7.9",
     "axios": "^0.26.1",
-    "element-ui": "^2.15.6"
+    "element-ui": "^2.15.6",
+    "monaco-editor": "^0.33.0"
   },
   "devDependencies": {
     "electron": "^17.1.2"

@@ -9,9 +9,42 @@
 
 <body>
     <div id="App">
+
+        <el-menu class="el-menu-demo" mode="horizontal">
+            <el-submenu index="1">
+                <template slot="title">项目</template>
+                <el-menu-item index="1-1">新建</el-menu-item>
+                <el-menu-item index="1-2">保存</el-menu-item>
+                <el-menu-item index="1-3">打开</el-menu-item>
+                <el-menu-item index="1-3">关闭</el-menu-item>
+            </el-submenu>
+            <el-submenu index="2">
+                <template slot="title">数据处理</template>
+                <el-menu-item index="2-1">刷新</el-menu-item>
+                <el-menu-item index="2-2">导出数据</el-menu-item>
+                <el-menu-item index="2-3">清理</el-menu-item>
+
+            </el-submenu>
+        </el-menu>
+        <div class="line"></div>
+
         <el-row :gutter="10">
             <el-col :xs="4" :sm="4" :md="4">
                 <h5>数据表</h5>
+
+                <el-row>
+                    <el-col :xs="12" :sm="12" :md="12">
+                        <el-button-group>
+                            <el-button icon="el-icon-plus" circle></el-button>
+                            <el-button icon="el-icon-edit" circle></el-button>
+                            <el-button icon="el-icon-delete" circle></el-button>
+                        </el-button-group>
+
+                    </el-col>
+                    <el-col :xs="12" :sm="12" :md="12">
+                        <el-input placeholder="请输入内容" prefix-icon="el-icon-search"></el-input>
+                    </el-col>
+                </el-row>
                 <el-divider></el-divider>
                 <el-menu default-active="2" class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose">
 
@@ -32,7 +65,22 @@
             </el-col>
 
             <el-col :xs="10" :sm="10" :md="10">
-                <h5>Content</h5>
+                <h5>数据内容</h5>
+
+                <el-row>
+                    <el-col :xs="8" :sm="8" :md="8">
+                        <el-button-group>
+                            <el-button icon="el-icon-plus" circle></el-button>
+                            <el-button icon="el-icon-edit" circle></el-button>
+                            <el-button icon="el-icon-delete" circle></el-button>
+                        </el-button-group>
+
+                    </el-col>
+                    <el-col :xs="8" :sm="8" :md="8">
+                        <el-input placeholder="请输入内容" prefix-icon="el-icon-search"></el-input>
+                    </el-col>
+                </el-row>
+
                 <el-divider></el-divider>
                 <el-menu default-active="2" class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose">
                     <el-menu-item class="box-card" v-for="v in tableData">
@@ -41,17 +89,26 @@
                         <span><strong>Desc:</strong>{{v.Desc}}</span><span style="width: 40;"></span>
                     </el-menu-item>
                 </el-menu>
-                
+                <el-divider></el-divider>
+                <h5>定义表的结构</h5>
+                <div style="height: 500px"  id ='CodeContainer'></div>
 
             </el-col>
 
             <el-col :xs="10" :sm="10" :md="10">
-                <h5>Inspector</h5>
+                <h5>数据编辑</h5>
                 <el-divider></el-divider>
+                <el-input placeholder="请输入备注信息"></el-input>
                 <ncform :form-schema="formSchema" form-name="form2" v-model="formSchema.value" @submit="submit()">
                 </ncform>
                 <el-divider></el-divider>
-                <el-button @click="submit()">Save</el-button>
+                <el-row>
+                    <el-button type="primary" icon="el-icon-document" round>导出数据预览</el-button>
+                    <el-button type="success">保存</el-button>
+                    <el-button type="warning">清空</el-button>
+                    <el-button type="danger">删除</el-button>
+                </el-row>
+                
             </el-col>
 
         </el-row>
