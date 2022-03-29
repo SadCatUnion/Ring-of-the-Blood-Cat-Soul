@@ -9,11 +9,11 @@ public class State
     List<StateAction> updateActions;
     List<StateAction> lateUpdateActions;
 
-    public State(List<StateAction> fixedUpdateActions, List<StateAction> updateActions, List<StateAction> lateUpdateActions)
+    public State(List<StateAction> _fixedUpdateActions, List<StateAction> _updateActions, List<StateAction> _lateUpdateActions)
     {
-        this.fixedUpdateActions = fixedUpdateActions;
-        this.updateActions = updateActions;
-        this.lateUpdateActions = lateUpdateActions;
+        fixedUpdateActions = _fixedUpdateActions;
+        updateActions = _updateActions;
+        lateUpdateActions = _lateUpdateActions;
     }
 
     public void FixedTick()

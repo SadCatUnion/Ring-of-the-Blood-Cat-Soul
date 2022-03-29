@@ -4,7 +4,7 @@ using UnityEngine;
 
 public abstract class StateManager : MonoBehaviour
 {
-    Dictionary<string, State> states;
+    Dictionary<string, State> states = new Dictionary<string, State>();
     State currentState;
     private void Start()
     {
