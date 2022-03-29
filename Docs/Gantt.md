@@ -1,6 +1,6 @@
 ```mermaid
 gantt
-    title A Gantt Diagram
+    title Ring of the Blood Cat Soul
     dateFormat  YYYY-MM-DD
 
     section Section
