@@ -12,6 +12,14 @@ public class PlayerController : MonoBehaviour
     private Vector2 m_Look;
     private Vector2 m_Rotation;
 
+    private Animator m_Animator;
+    private bool m_IsWalking;
+
+    void Start()
+    {
+        m_Animator = GetComponent<Animator>();
+    }
+
     void Update()
     {
         Look(m_Look);
@@ -30,10 +38,16 @@ public class PlayerController : MonoBehaviour
     private void Move(Vector2 direction)
     {
         if (direction.sqrMagnitude < 0.01)
+        {
+            m_Animator.SetBool("IsWalking", false);
             return;
+        }
+        
+        m_Animator.SetBool("IsWalking", true);
         var scaledMoveSpeed = moveSpeed * Time.deltaTime;
         var move = Quaternion.Euler(0, transform.eulerAngles.y, 0) * new Vector3(direction.x, 0, direction.y);
         transform.position += move * scaledMoveSpeed;
+        Debug.Log(transform.position);
     }
     private void Look(Vector2 rotate)
     {
