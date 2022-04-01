@@ -5,57 +5,54 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    public float moveSpeed;
-    public float rotateSpeed;
+    [Header("Sub Behaviours")]
+    public PlayerMovementBehaviour playerMovementBehaviour;
+    public PlayerAnimationBehaviour playerAnimationBehaviour;
 
-    private Vector2 m_Move;
-    private Vector2 m_Look;
-    private Vector2 m_Rotation;
-
-    private Animator m_Animator;
-    private bool m_IsWalking;
+    [Header("Input Settings")]
+    public float movementSmoothingSpeed = 1f;
+    private Vector3 rawInputMovement;
+    private Vector3 smoothInputMovement;
 
     void Start()
     {
-        m_Animator = GetComponent<Animator>();
+        Setup();
+    }
+
+    public void Setup()
+    {
+        playerMovementBehaviour.SetupBehaviour();
+        playerAnimationBehaviour.SetupBehaviour();
     }
 
     void Update()
     {
-        Look(m_Look);
-        Move(m_Move);
+        CaculateMovementInputSmoothing();
+        UpdatePlayerMovement();
+        UpdatePlayerAnimationMovement();
     }
 
     public void OnMove(InputAction.CallbackContext context)
     {
-        m_Move = context.ReadValue<Vector2>();
-    }
-    public void OnLook(InputAction.CallbackContext context)
-    {
-        m_Look = context.ReadValue<Vector2>();
+        Vector2 inputMovement = context.ReadValue<Vector2>();
+        rawInputMovement = new Vector3(inputMovement.x, 0, inputMovement.y);
     }
 
-    private void Move(Vector2 direction)
+    /*public void OnLook(InputAction.CallbackContext context)
     {
-        if (direction.sqrMagnitude < 0.01)
-        {
-            m_Animator.SetBool("IsWalking", false);
-            return;
-        }
-        
-        m_Animator.SetBool("IsWalking", true);
-        var scaledMoveSpeed = moveSpeed * Time.deltaTime;
-        var move = Quaternion.Euler(0, transform.eulerAngles.y, 0) * new Vector3(direction.x, 0, direction.y);
-        transform.position += move * scaledMoveSpeed;
-        Debug.Log(transform.position);
+        m_Look = context.ReadValue<Vector2>();
+    }*/
+
+    private void CaculateMovementInputSmoothing()
+    {
+        smoothInputMovement = Vector3.Lerp(smoothInputMovement, rawInputMovement, movementSmoothingSpeed * Time.deltaTime);
     }
-    private void Look(Vector2 rotate)
+    private void UpdatePlayerMovement()
     {
-        if (rotate.sqrMagnitude < 0.01)
-            return;
-        var scaledRotateSpeed = rotateSpeed * Time.deltaTime;
-        m_Rotation.y += rotate.x * scaledRotateSpeed;
-        m_Rotation.x = Mathf.Clamp(m_Rotation.x - rotate.y * scaledRotateSpeed, -89, 89);
-        transform.localEulerAngles = m_Rotation;
+        playerMovementBehaviour.UpdateMovementData(smoothInputMovement);
+    }
+    private void UpdatePlayerAnimationMovement()
+    {
+        playerAnimationBehaviour.UpdateMovementAnimation(smoothInputMovement.magnitude);
     }
 }
