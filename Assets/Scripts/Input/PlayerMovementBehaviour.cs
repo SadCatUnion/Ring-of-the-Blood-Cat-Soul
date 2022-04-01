@@ -48,7 +48,7 @@ public class PlayerMovementBehaviour : MonoBehaviour
     {
         if (movementDirection.sqrMagnitude > 0.01f)
         {
-            Vector3 forward = Quaternion.Euler(0f, cinemachineFreeLook.m_XAxis.Value, 0f) * Vector3.forward;
+            /*Vector3 forward = Quaternion.Euler(0f, cinemachineFreeLook.m_XAxis.Value, 0f) * Vector3.forward;
             forward.y = 0f;
             forward.Normalize();
 
@@ -64,9 +64,9 @@ public class PlayerMovementBehaviour : MonoBehaviour
                 targetRotation = Quaternion.LookRotation(cameraToInputOffset * forward);
             }
 
+            Quaternion rotation = Quaternion.Slerp(rb.rotation, targetRotation, turnSpeed);*/
 
-            Quaternion rotation = Quaternion.Slerp(rb.rotation, targetRotation, turnSpeed);
-            //Quaternion rotation = Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(movementDirection), turnSpeed);
+            Quaternion rotation = Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(movementDirection), turnSpeed);
             rb.MoveRotation(rotation);
         }
     }
