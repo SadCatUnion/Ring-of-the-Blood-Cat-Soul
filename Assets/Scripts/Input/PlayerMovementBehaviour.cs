@@ -35,7 +35,13 @@ public class PlayerMovementBehaviour : MonoBehaviour
 
     public void UpdateMovementData(Vector3 newMovementDirection)
     {
-        movementDirection = newMovementDirection;
+        //get the right-facing direction of the referenceTransform
+        var right = mainCamera.transform.right;
+        right.y = 0;
+        //get the forward direction relative to referenceTransform Right
+        var forward = Quaternion.AngleAxis(-90, Vector3.up) * right;
+        // determine the direction the player will face based on input and the referenceTransform's right and forward directions
+        movementDirection = (newMovementDirection.x * right) + (newMovementDirection.z * forward);
     }
 
     private void Move()
@@ -48,26 +54,10 @@ public class PlayerMovementBehaviour : MonoBehaviour
     {
         if (movementDirection.sqrMagnitude > 0.01f)
         {
-            /*Vector3 forward = Quaternion.Euler(0f, cinemachineFreeLook.m_XAxis.Value, 0f) * Vector3.forward;
-            forward.y = 0f;
-            forward.Normalize();
-
-            Quaternion targetRotation;
-
-            if (Mathf.Approximately(Vector3.Dot(movementDirection, Vector3.forward), -1f))
-            {
-                targetRotation = Quaternion.LookRotation(-forward);
-            }
-            else
-            {
-                Quaternion cameraToInputOffset = Quaternion.FromToRotation(Vector3.forward, movementDirection);
-                targetRotation = Quaternion.LookRotation(cameraToInputOffset * forward);
-            }
-
-            Quaternion rotation = Quaternion.Slerp(rb.rotation, targetRotation, turnSpeed);*/
-
-            Quaternion rotation = Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(movementDirection), turnSpeed);
-            rb.MoveRotation(rotation);
+            Vector3 direction = movementDirection;
+            direction.y = 0f;
+            Vector3 desiredForward = Vector3.RotateTowards(rb.transform.forward, direction.normalized, turnSpeed * Time.deltaTime, .1f);
+            rb.MoveRotation(Quaternion.LookRotation(desiredForward));
         }
     }
 }
