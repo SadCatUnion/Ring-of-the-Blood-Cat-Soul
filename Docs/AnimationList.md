@@ -1,0 +1,142 @@
+# Include
+- rig_Airborne.anim
+- rig_Attack_Airborne_End.anim
+- rig_Attack_Airborne_Mid.anim
+- rig_Attack_Airborne_Start.anim
+- rig_Attack_Combo1.anim
+- rig_Attack_Combo2.anim
+- rig_Attack_Combo3.anim
+- rig_Attack_Combo4.anim
+- rig_Attack_Dodge.anim
+- rig_Attack_Dodge_to_Combo1.anim
+- rig_Attack_Heavy1.anim
+- rig_Attack_Heavy1_Start.anim
+- rig_Attack_Heavy2.anim
+- rig_Attack_Sprint.anim
+- rig_A_Bindpose.anim
+- rig_Brake.anim
+- rig_Brake2.anim
+- rig_Brake2_no_weapon.anim
+- rig_Brake_no_weapon.anim
+- rig_Collide.anim
+- rig_Death.anim
+- rig_Death2.anim
+- rig_Death_Airborne_End.anim
+- rig_Death_Airborne_Mid.anim
+- rig_Death_Airborne_Start.anim
+- rig_Dodge.anim
+- rig_Equip_Idle1.anim
+- rig_Equip_Idle2.anim
+- rig_Evade_Backward.anim
+- rig_Evade_Backward_Left.anim
+- rig_Evade_Backward_Right.anim
+- rig_Evade_Forward.anim
+- rig_Evade_Forward_Left.anim
+- rig_Evade_Forward_Right.anim
+- rig_Evade_Left.anim
+- rig_Evade_Right.anim
+- rig_Execute.anim
+- rig_Executed.anim
+- rig_Executed_Death.anim
+- rig_Guard.anim
+- rig_Guard_Hit1.anim
+- rig_Guard_Hit2.anim
+- rig_Guard_Hit3.anim
+- rig_Guard_Start.anim
+- rig_Guard_Turn90L.anim
+- rig_Guard_Turn90R.anim
+- rig_Guard_Walk_Backward_IPC.anim
+- rig_Guard_Walk_Backward_Left_IPC.anim
+- rig_Guard_Walk_Backward_Left_Rootmotion.anim
+- rig_Guard_Walk_Backward_Right_IPC.anim
+- rig_Guard_Walk_Backward_Right_Rootmotion.anim
+- rig_Guard_Walk_Backward_Rootmotion.anim
+- rig_Guard_Walk_Forward_IPC.anim
+- rig_Guard_Walk_Forward_Left_IPC.anim
+- rig_Guard_Walk_Forward_Left_Rootmotion.anim
+- rig_Guard_Walk_Forward_Right_IPC.anim
+- rig_Guard_Walk_Forward_Right_Rootmotion.anim
+- rig_Guard_Walk_Forward_Rootmotion.anim
+- rig_Guard_Walk_Leftward_IPC.anim
+- rig_Guard_Walk_Leftward_Rootmotion.anim
+- rig_Guard_Walk_Rightward_IPC.anim
+- rig_Guard_Walk_Rightward_Rootmotion.anim
+- rig_Hit1.anim
+- rig_Hit2.anim
+- rig_Hit3.anim
+- rig_Hit4.anim
+- rig_Hit5.anim
+- rig_Hit_Air.anim
+- rig_Hit_Airborne.anim
+- rig_Hit_Air_Down.anim
+- rig_Hit_Air_Up.anim
+- rig_Hit_knockdown.anim
+- rig_Hit_knockdown_Death.anim
+- rig_Idle1.anim
+- rig_Idle1_to_Idle2.anim
+- rig_Idle2.anim
+- rig_Idle2_to_Idle1.anim
+- rig_Idle_no_weapon.anim
+- rig_Landing.anim
+- rig_Landing2.anim
+- rig_Landing3.anim
+- rig_Landing4.anim
+- rig_Parry.anim
+- rig_Sprint_IPC.anim
+- rig_Sprint_no_weapon_IPC.anim
+- rig_Sprint_no_weapon_Rootmotion.anim
+- rig_Sprint_Rootmotion.anim
+- rig_Sprint_Start_L_IPC.anim
+- rig_Sprint_Start_L_Rootmotion.anim
+- rig_Sprint_Start_no_weapon_IPC.anim
+- rig_Sprint_Start_no_weapon_Rootmotion.anim
+- rig_Sprint_Start_R_IPC.anim
+- rig_Sprint_Start_R_Rootmotion.anim
+- rig_Sprint_Turn180_IPC.anim
+- rig_Sprint_Turn180_no_weapon_IPC.anim
+- rig_Sprint_Turn180_no_weapon_Rootmotion.anim
+- rig_Sprint_Turn180_Rootmotion.anim
+- rig_Turn_90L.anim
+- rig_Turn_90R.anim
+- rig_Unequip_Idle1.anim
+- rig_Unequip_Idle2.anim
+- rig_Walk2_IPC.anim
+- rig_Walk2_Rootmotion.anim
+- rig_Walk_Backward_IPC.anim
+- rig_Walk_Backward_Left_IPC.anim
+- rig_Walk_Backward_Left_Rootmotion.anim
+- rig_Walk_Backward_Right_IPC.anim
+- rig_Walk_Backward_Right_Rootmotion.anim
+- rig_Walk_Backward_Rootmotion.anim
+- rig_Walk_Forward_IPC.anim
+- rig_Walk_Forward_Left_IPC.anim
+- rig_Walk_Forward_Left_Rootmotion.anim
+- rig_Walk_Forward_Right_IPC.anim
+- rig_Walk_Forward_Right_Rootmotion.anim
+- rig_Walk_Forward_Rootmotion.anim
+- rig_Walk_Leftward_IPC.anim
+- rig_Walk_Leftward_Rootmotion.anim
+- rig_Walk_no_weapon_IPC.anim
+- rig_Walk_no_weapon_Rootmotion.anim
+- rig_Walk_Rightward_IPC.anim
+- rig_Walk_Rightward_Rootmotion.anim
+# <font color = red>Exclude</font>
+- <font color = red>rig_Guard_Break.anim</font>
+- <font color = red>rig_Run_Backward_IPC.anim</font>
+- <font color = red>rig_Run_Backward_Left_IPC.anim</font>
+- <font color = red>rig_Run_Backward_Left_Rootmotion.anim</font>
+- <font color = red>rig_Run_Backward_Right_IPC.anim</font>
+- <font color = red>rig_Run_Backward_Right_Rootmotion.anim</font>
+- <font color = red>rig_Run_Backward_Rootmotion.anim</font>
+- <font color = red>rig_Run_Forward_IPC.anim</font>
+- <font color = red>rig_Run_Forward_Left_IPC.anim</font>
+- <font color = red>rig_Run_Forward_Left_Rootmotion.anim</font>
+- <font color = red>rig_Run_Forward_Right_IPC.anim</font>
+- <font color = red>rig_Run_Forward_Right_Rootmotion.anim</font>
+- <font color = red>rig_Run_Forward_Rootmotion.anim</font>
+- <font color = red>rig_Run_Leftward_IPC.anim</font>
+- <font color = red>rig_Run_Leftward_Rootmotion.anim</font>
+- <font color = red>rig_Run_no_weapon_IPC.anim</font>
+- <font color = red>rig_Run_no_weapon_Rootmotion.anim</font>
+- <font color = red>rig_Run_Rightward_IPC.anim</font>
+- <font color = red>rig_Run_Rightward_Rootmotion.anim</font>
