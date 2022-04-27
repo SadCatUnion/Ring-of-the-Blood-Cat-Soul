@@ -1506,8 +1506,8 @@ MonoBehaviour:
   playerTransform: {fileID: 1914048552}
   animator: {fileID: 15997476}
   inputController: {fileID: 1914048554}
-  moveSpeed: 3
-  turnSpeed: 10
+  moveSpeed: 5
+  turnSpeed: 15
 --- !u!4 &1914048552
 Transform:
   m_ObjectHideFlags: 0

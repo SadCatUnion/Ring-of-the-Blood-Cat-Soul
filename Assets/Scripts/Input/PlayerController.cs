@@ -93,7 +93,7 @@ public class PlayerController : MonoBehaviour
 
     private void Turn()
     {
-        var targetForward = Vector3.RotateTowards(playerTransform.forward, targetDirection, turnSpeed * Time.deltaTime, .1f);
+        var targetForward = Vector3.RotateTowards(playerTransform.forward, targetDirection, turnSpeed * Time.deltaTime, 0f);
         playerTransform.rotation = Quaternion.LookRotation(targetForward);
     }
 }
