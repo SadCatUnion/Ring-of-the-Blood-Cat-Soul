@@ -19,6 +19,8 @@ state Locomotion {
     Walk --> Idle
     Walk --> Run
     Run --> Walk
+    Run --> Sprint
+    Sprint --> Run
 }
 
 state ActiveBehaviour {

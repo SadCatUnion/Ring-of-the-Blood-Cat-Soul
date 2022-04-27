@@ -1,58 +1,99 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using Cinemachine;
+using FSM;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Component References")]
+    public Transform playerTransform;
+    public Animator animator;
+
     [Header("Sub Behaviours")]
-    public PlayerMovementBehaviour playerMovementBehaviour;
-    public PlayerAnimationBehaviour playerAnimationBehaviour;
+    public InputController inputController;
 
-    [Header("Input Settings")]
-    public float movementSmoothingSpeed = 1f;
-    private Vector3 rawInputMovement;
-    private Vector3 smoothInputMovement;
+    [Header("Movement Settings")]
+    public float moveSpeed = 3f;
+    public float turnSpeed = 1f;
 
+    private StateMachine fsm;
+    private Camera mainCamera;
+    private CinemachineFreeLook cinemachineFreeLook;
+    private Vector3 XYInput;
+    private Vector3 targetDirection;
+    
     void Start()
     {
-        Setup();
-    }
+        fsm = new StateMachine();
+        fsm.AddState("Idle", new State());
+        fsm.AddState("Walk", new State());
+        fsm.AddState("Run", new State());
+        fsm.SetStartState("Idle");
 
-    public void Setup()
-    {
-        playerMovementBehaviour.SetupBehaviour();
-        playerAnimationBehaviour.SetupBehaviour();
+        // fsm.AddTransition(new Transition(
+        //     "Idle",
+        //     "Walk",
+        //     (transition) => Idle2Walk()
+        // ));
+        // fsm.AddTransition(new Transition(
+        //     "Walk",
+        //     "Idle",
+        //     (transition) => Walk2Idle()
+        // ));
+
+        fsm.Init();
+        SetMainCamera();
     }
 
     void Update()
     {
-        CaculateMovementInputSmoothing();
-        UpdatePlayerMovement();
-        UpdatePlayerAnimationMovement();
+        TransformInput();
     }
 
-    public void OnMove(InputAction.CallbackContext context)
+    private void SetMainCamera()
     {
-        Vector2 inputMovement = context.ReadValue<Vector2>();
-        rawInputMovement = new Vector3(inputMovement.x, 0, inputMovement.y);
+        mainCamera = CameraManager.Instance.GetMainCamera();
+        cinemachineFreeLook = CameraManager.Instance.GetVCamera();
     }
 
-    /*public void OnLook(InputAction.CallbackContext context)
+    private void FixedUpdate()
     {
-        m_Look = context.ReadValue<Vector2>();
-    }*/
+        Turn();
+        Move();
+    }
 
-    private void CaculateMovementInputSmoothing()
+    public void TransformInput()
     {
-        smoothInputMovement = Vector3.Lerp(smoothInputMovement, rawInputMovement, movementSmoothingSpeed * Time.deltaTime);
+        switch (CameraManager.Instance.GetCameraMode())
+        {
+            case CameraManager.ECameraMode.LOCK_FREE:
+                //get the right-facing direction of the referenceTransform
+                var right = mainCamera.transform.right;
+                //get the forward direction relative to referenceTransform Right
+                var forward = Quaternion.AngleAxis(-90f, Vector3.up) * right;
+                var input = inputController.GetInput();
+                // Debug.Log(input);
+                // determine the direction the player will face based on input and the referenceTransform's right and forward directions
+                XYInput = (input.x * right) + (input.y * forward);
+                targetDirection = XYInput.normalized;
+                
+                break;
+            case CameraManager.ECameraMode.LOCK_ON:
+                break;
+        }
+        animator.SetFloat("XYInputLength", XYInput.magnitude);
     }
-    private void UpdatePlayerMovement()
+
+    private void Move()
     {
-        playerMovementBehaviour.UpdateMovementData(smoothInputMovement);
+        var displacement = XYInput * moveSpeed * Time.deltaTime;
+        playerTransform.position = playerTransform.position + displacement;
     }
-    private void UpdatePlayerAnimationMovement()
+
+    private void Turn()
     {
-        playerAnimationBehaviour.UpdateMovementAnimation(smoothInputMovement.magnitude);
+        var targetForward = Vector3.RotateTowards(playerTransform.forward, targetDirection, turnSpeed * Time.deltaTime, .1f);
+        playerTransform.rotation = Quaternion.LookRotation(targetForward);
     }
 }
