@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 using Cinemachine;
 using FSM;
@@ -7,10 +6,7 @@ using FSM;
 public class PlayerController : MonoBehaviour
 {
     [Header("Component References")]
-    public Transform playerTransform;
     public Animator animator;
-
-    [Header("Sub Behaviours")]
     public InputController inputController;
 
     [Header("Movement Settings")]
@@ -25,11 +21,20 @@ public class PlayerController : MonoBehaviour
     
     void Start()
     {
+        SetCamera();
+
+        StateMachine SM_Locomotion = new StateMachine(needsExitTime: false);
+        SM_Locomotion.AddState("Idle", new State());
+        SM_Locomotion.AddState("Walk", new State());
+        SM_Locomotion.AddState("Run", new State());
+        SM_Locomotion.AddState("Sprint", new State());
+
+        StateMachine SM_InputAction = new StateMachine(needsExitTime: false);
+        SM_InputAction.AddState("Evade", new State());
+
         fsm = new StateMachine();
-        fsm.AddState("Idle", new State());
-        fsm.AddState("Walk", new State());
-        fsm.AddState("Run", new State());
-        fsm.SetStartState("Idle");
+        fsm.AddState("Locomotion", SM_Locomotion);
+        fsm.AddState("InputAction", SM_InputAction);
 
         // fsm.AddTransition(new Transition(
         //     "Idle",
@@ -42,8 +47,9 @@ public class PlayerController : MonoBehaviour
         //     (transition) => Walk2Idle()
         // ));
 
+        fsm.SetStartState("Locomotion");
         fsm.Init();
-        SetMainCamera();
+        
     }
 
     void Update()
@@ -51,7 +57,7 @@ public class PlayerController : MonoBehaviour
         TransformInput();
     }
 
-    private void SetMainCamera()
+    private void SetCamera()
     {
         mainCamera = CameraManager.Instance.GetMainCamera();
         cinemachineFreeLook = CameraManager.Instance.GetVCamera();
@@ -88,12 +94,12 @@ public class PlayerController : MonoBehaviour
     private void Move()
     {
         var displacement = XYInput * moveSpeed * Time.deltaTime;
-        playerTransform.position = playerTransform.position + displacement;
+        transform.position = transform.position + displacement;
     }
 
     private void Turn()
     {
-        var targetForward = Vector3.RotateTowards(playerTransform.forward, targetDirection, turnSpeed * Time.deltaTime, 0f);
-        playerTransform.rotation = Quaternion.LookRotation(targetForward);
+        var targetForward = Vector3.RotateTowards(transform.forward, targetDirection, turnSpeed * Time.deltaTime, 0f);
+        transform.rotation = Quaternion.LookRotation(targetForward);
     }
 }
