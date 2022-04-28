@@ -843,7 +843,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: 0.07744127, y: 0.000000017159756, z: -0.0000000013320332, w: 0.99699694}
+  m_LocalRotation: {x: 0.07744127, y: -0.000000017159753, z: 0.0000000013320329, w: 0.99699694}
   m_LocalPosition: {x: 0, y: 2.5, z: -5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -1010,7 +1010,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1068263601}
-  m_LocalRotation: {x: 0.07744127, y: 0.000000017154708, z: -0.0000000013324842, w: 0.99699694}
+  m_LocalRotation: {x: 0.07744127, y: -0.000000017154704, z: 0.000000001332484, w: 0.99699694}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -1503,7 +1503,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2a2766ffa921df498a4ea60263ddd43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerTransform: {fileID: 1914048552}
   animator: {fileID: 15997476}
   inputController: {fileID: 1914048554}
   moveSpeed: 5
@@ -1569,6 +1568,22 @@ MonoBehaviour:
       m_Calls: []
     m_ActionId: 18317420-d840-4623-9611-42703371477f
     m_ActionName: Player/Look[/Mouse/delta]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1914048554}
+        m_TargetAssemblyTypeName: InputController, Assembly-CSharp
+        m_MethodName: OnEvade
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: bedab584-5448-44bf-965b-83776d6632ce
+    m_ActionName: Player/Evade[/Keyboard/space]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -1586,4 +1601,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1a86097d843f04499eebb305ccc1a0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementSmoothingSpeed: 1
+  animator: {fileID: 15997476}

@@ -49,7 +49,6 @@ public class PlayerController : MonoBehaviour
 
         fsm.SetStartState("Locomotion");
         fsm.Init();
-        
     }
 
     void Update()
@@ -83,11 +82,11 @@ public class PlayerController : MonoBehaviour
                 // determine the direction the player will face based on input and the referenceTransform's right and forward directions
                 XYInput = (input.x * right) + (input.y * forward);
                 targetDirection = XYInput.normalized;
-                
                 break;
             case CameraManager.ECameraMode.LOCK_ON:
                 break;
         }
+        Debug.Log(XYInput.magnitude);
         animator.SetFloat("XYInputLength", XYInput.magnitude);
     }
 
@@ -101,5 +100,10 @@ public class PlayerController : MonoBehaviour
     {
         var targetForward = Vector3.RotateTowards(transform.forward, targetDirection, turnSpeed * Time.deltaTime, 0f);
         transform.rotation = Quaternion.LookRotation(targetForward);
+    }
+
+    private void Evade()
+    {
+        animator.SetTrigger("Evade");
     }
 }
