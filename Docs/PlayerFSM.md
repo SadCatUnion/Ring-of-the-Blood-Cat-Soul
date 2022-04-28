@@ -2,19 +2,13 @@
 stateDiagram-v2
 
 [*] --> Locomotion
+Locomotion --> InputAction : Input
 
-Locomotion --> ActiveBehaviour
-Locomotion --> PassiveBehaviour
-
-ActiveBehaviour --> Locomotion
-ActiveBehaviour --> PassiveBehaviour
-
-PassiveBehaviour --> ActiveBehaviour
-PassiveBehaviour --> Locomotion
-
-direction LR
-
-state Locomotion {    
+%% OnUpdate: Rotate and Move
+state Locomotion {
+	direction LR
+	
+	[*] --> Idle
     Idle --> Walk
     Walk --> Idle
     Walk --> Run
@@ -23,28 +17,10 @@ state Locomotion {
     Sprint --> Run
 }
 
-state ActiveBehaviour {
-    direction LR
-    state if <<choice>>
-
-    [*] --> if
-    if --> Parry
-    if --> Jump
-    Jump --> Attack
-    if --> Attack
-    
-    if --> Evade
-    
-
-    Parry --> [*]
-    Jump --> [*]
-    Attack --> [*]
-    Evade --> [*]
-    
-}
-
-state PassiveBehaviour {
-    Attacked
+state InputAction {
+	state if <<choice>>
+	[*] --> if
+	if --> Evade
 }
 
 ```
