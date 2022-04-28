@@ -7,4 +7,7 @@ namespace FSM
         StateBase<TStateId> ActiveState { get; }
         TStateId ActiveStateName { get; }
     }
+    public interface IStateMachine : IStateMachine<string>
+    {
+    }
 }

@@ -189,7 +189,19 @@ public class ExamplesCfg
             //静态或动态列表
             return new List<Type>()
             {
-                
+                typeof(FSM.IActionable<string>),
+                typeof(FSM.IStateMachine<string>),
+                typeof(FSM.ITriggerable<string>),
+                typeof(FSM.StateBase<string>),
+                typeof(FSM.TransitionBase<string>),
+                typeof(FSM.ITimer),
+                typeof(FSM.Timer),
+                typeof(FSM.ActionState<string, string>),
+                typeof(FSM.State<string>),
+                typeof(FSM.StateWrapper<string, string>),
+                typeof(FSM.Transition<string>),
+                typeof(FSM.StateMachine<string, string, string>),
+                typeof(FSM.HybridStateMachine<string>),
             };
         }
     }
