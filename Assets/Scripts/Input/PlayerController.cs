@@ -86,7 +86,6 @@ public class PlayerController : MonoBehaviour
             case CameraManager.ECameraMode.LOCK_ON:
                 break;
         }
-        Debug.Log(XYInput.magnitude);
         animator.SetFloat("XYInputLength", XYInput.magnitude);
     }
 
@@ -100,10 +99,5 @@ public class PlayerController : MonoBehaviour
     {
         var targetForward = Vector3.RotateTowards(transform.forward, targetDirection, turnSpeed * Time.deltaTime, 0f);
         transform.rotation = Quaternion.LookRotation(targetForward);
-    }
-
-    private void Evade()
-    {
-        animator.SetTrigger("Evade");
     }
 }

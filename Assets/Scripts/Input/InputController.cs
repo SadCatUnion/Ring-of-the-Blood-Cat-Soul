@@ -7,7 +7,6 @@ public class InputController : MonoBehaviour
     [Header("Component References")]
     public Animator animator;
     private Vector2 rawInputMovement;
-    private bool isSpaceButtonDown;
 
     public void OnMove(InputAction.CallbackContext context)
     {
@@ -25,12 +24,11 @@ public class InputController : MonoBehaviour
     {
         if (context.ReadValueAsButton())
         {
-            // animator.SetTrigger("Evade");
-            animator.CrossFade("Evade", 0.2f);
-        } 
+            animator.SetTrigger("Evade");
+        }
         else
         {
-            // animator.ResetTrigger("Evade");
+            animator.ResetTrigger("Evade");
         }
     }
 

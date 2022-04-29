@@ -123,11 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!95 &15997476 stripped
-Animator:
-  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
-  m_PrefabInstance: {fileID: 1540877421}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &323250673
 GameObject:
   m_ObjectHideFlags: 3
@@ -1300,7 +1295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac0b09e7857660247b1477e93731de29, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!1001 &1540877421
+--- !u!1001 &1393507412
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -1329,15 +1324,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1353,18 +1348,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
       propertyPath: m_Name
-      value: ARPG_Warrior_Generic
+      value: ARPG_Warrior_Humanoid
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: bb4ee6a57c3aaac4289b42d96af20504, type: 2}
+    - target: {fileID: 5866666021909216657, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
+      propertyPath: m_CullingMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
---- !u!4 &1540877422 stripped
+--- !u!4 &1393507413 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
-  m_PrefabInstance: {fileID: 1540877421}
+  m_PrefabInstance: {fileID: 1393507412}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &1393507414 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: ec4b9ebfd7ccb5c4a897cd6af5b2918c, type: 3}
+  m_PrefabInstance: {fileID: 1393507412}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1630399433
 GameObject:
@@ -1503,7 +1511,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2a2766ffa921df498a4ea60263ddd43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 15997476}
+  animator: {fileID: 1393507414}
   inputController: {fileID: 1914048554}
   moveSpeed: 5
   turnSpeed: 15
@@ -1518,7 +1526,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 1540877422}
+  - {fileID: 1393507413}
   - {fileID: 1267980364}
   m_Father: {fileID: 0}
   m_RootOrder: 2
@@ -1601,4 +1609,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1a86097d843f04499eebb305ccc1a0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  animator: {fileID: 15997476}
+  animator: {fileID: 1393507414}
