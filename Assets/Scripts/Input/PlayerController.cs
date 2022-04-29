@@ -13,11 +13,17 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 3f;
     public float turnSpeed = 1f;
 
+    public float jumpSpeed = 1f;
+    public float jumpHeight = 1f;
+    public float fallSpeed = 1f;
+
     private StateMachine fsm;
     private Camera mainCamera;
     private CinemachineFreeLook cinemachineFreeLook;
     private Vector3 XYInput;
     private Vector3 targetDirection;
+
+    private bool isOnGound;
     
     void Start()
     {
@@ -30,22 +36,23 @@ public class PlayerController : MonoBehaviour
         SM_Locomotion.AddState("Sprint", new State());
 
         StateMachine SM_InputAction = new StateMachine(needsExitTime: false);
-        SM_InputAction.AddState("Evade", new State());
+        //SM_InputAction.AddState("Evade", new State());
+        SM_InputAction.AddState("Jump", new State(
+            onFocus: (state) => Jump()
+        ));
+        SM_InputAction.AddState("Fall", new State(
+            onFocus: (state) => Fall()
+        ));
+        SM_InputAction.AddState("Land", new State(
+            onFocus: (state) => Fall()
+        ));
 
         fsm = new StateMachine();
         fsm.AddState("Locomotion", SM_Locomotion);
         fsm.AddState("InputAction", SM_InputAction);
 
-        // fsm.AddTransition(new Transition(
-        //     "Idle",
-        //     "Walk",
-        //     (transition) => Idle2Walk()
-        // ));
-        // fsm.AddTransition(new Transition(
-        //     "Walk",
-        //     "Idle",
-        //     (transition) => Walk2Idle()
-        // ));
+        fsm.AddTriggerTransitionFromAny("Input", new Transition(default, "InputAction"));
+        fsm.AddTriggerTransitionFromAny("Locomotion", new Transition(default, "Locomotion"));
 
         fsm.SetStartState("Locomotion");
         fsm.Init();
@@ -54,6 +61,7 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         TransformInput();
+        fsm.OnFocus();
     }
 
     private void SetCamera()
@@ -61,6 +69,9 @@ public class PlayerController : MonoBehaviour
         mainCamera = CameraManager.Instance.GetMainCamera();
         cinemachineFreeLook = CameraManager.Instance.GetVCamera();
     }
+
+    public StateMachine GetFSM()
+    { return fsm; }
 
     private void FixedUpdate()
     {
@@ -89,6 +100,11 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat("XYInputLength", XYInput.magnitude);
     }
 
+    public bool IsOnGround()
+    {
+        return isOnGound;
+    }
+
     private void Move()
     {
         var displacement = XYInput * moveSpeed * Time.deltaTime;
@@ -99,5 +115,21 @@ public class PlayerController : MonoBehaviour
     {
         var targetForward = Vector3.RotateTowards(transform.forward, targetDirection, turnSpeed * Time.deltaTime, 0f);
         transform.rotation = Quaternion.LookRotation(targetForward);
+    }
+
+    private void Jump()
+    {
+        if (transform.position.y < jumpHeight)
+            transform.position = transform.position + new Vector3(0f, jumpSpeed * Time.deltaTime, 0f);
+        else
+            fsm.ChangeState("Fall");
+    }
+
+    private void Fall()
+    {
+        if (isOnGound)
+            fsm.ChangeState("Land");
+        if (transform.position.y > 0f)
+            transform.position = transform.position - new Vector3(0f, fallSpeed * Time.deltaTime, 0f);
     }
 }

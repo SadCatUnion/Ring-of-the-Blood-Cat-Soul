@@ -1,12 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using FSM;
 public class InputController : MonoBehaviour
 {
     [Header("Component References")]
     public Animator animator;
+    public PlayerController playerController;
     private Vector2 rawInputMovement;
+
+    private StateMachine fsm;
 
     public void OnMove(InputAction.CallbackContext context)
     {
@@ -29,6 +31,20 @@ public class InputController : MonoBehaviour
         else
         {
             animator.ResetTrigger("Evade");
+        }
+    }
+
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        if (context.ReadValueAsButton())
+        {
+            //animator.SetTrigger("Jump");
+            playerController.GetFSM().Trigger("Input");
+            animator.CrossFade("Air", 0.2f);
+        }
+        else
+        {
+            //animator.ResetTrigger("Jump");
         }
     }
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 namespace FSM
 {
     public class StateMachine<TOwnId, TStateId, TEvent> : StateBase<TStateId>, ITriggerable<TEvent>, IStateMachine<TStateId>, IActionable<TEvent>
@@ -133,7 +134,9 @@ namespace FSM
             {
 
             }
+            Debug.Log(startState.state);
             ChangeState(startState.state);
+            
             foreach (var transition in transitionsFromAny)
             {
                 transition.OnEnter();
