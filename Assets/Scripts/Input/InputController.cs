@@ -1,20 +1,18 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using FSM;
-public class InputController : MonoBehaviour
+public class InputController : Singleton<InputController>
 {
     [Header("Component References")]
     public Animator animator;
-    public PlayerController playerController;
-    private Vector2 rawInputMovement;
 
-    private StateMachine fsm;
+    private Vector2 rawXYInput;
 
     public void OnMove(InputAction.CallbackContext context)
     {
-        rawInputMovement = context.ReadValue<Vector2>();
-        animator.SetFloat("XInput", rawInputMovement.normalized.x);
-        animator.SetFloat("YInput", rawInputMovement.normalized.y);
+        rawXYInput = context.ReadValue<Vector2>();
+        // animator.SetFloat("XInput", rawXYInput.normalized.x);
+        // animator.SetFloat("YInput", rawXYInput.normalized.y);
     }
 
     /*public void OnLook(InputAction.CallbackContext context)
@@ -24,32 +22,30 @@ public class InputController : MonoBehaviour
 
     public void OnEvade(InputAction.CallbackContext context)
     {
-        if (context.ReadValueAsButton())
-        {
-            animator.SetTrigger("Evade");
-        }
-        else
-        {
-            animator.ResetTrigger("Evade");
-        }
+        // if (context.ReadValueAsButton())
+        // {
+        //     animator.SetTrigger("Evade");
+        // }
+        // else
+        // {
+        //     animator.ResetTrigger("Evade");
+        // }
     }
 
     public void OnJump(InputAction.CallbackContext context)
     {
         if (context.ReadValueAsButton())
         {
-            //animator.SetTrigger("Jump");
-            playerController.GetFSM().Trigger("Input");
-            animator.CrossFade("Air", 0.2f);
+            PlayerController.Instance.TrySetTriggerJump();
         }
         else
         {
-            //animator.ResetTrigger("Jump");
+            PlayerController.Instance.TryResetTriggerJump();
         }
     }
 
-    public Vector2 GetInput()
+    public Vector2 GetRawXYInput()
     {
-        return rawInputMovement;
-    }
+        return rawXYInput;
+    }    
 }

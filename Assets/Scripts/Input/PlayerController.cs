@@ -1,67 +1,60 @@
 using System;
 using UnityEngine;
 using Cinemachine;
-using FSM;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : Singleton<PlayerController>
 {
     [Header("Component References")]
     public Animator animator;
-    public InputController inputController;
 
     [Header("Movement Settings")]
     public float moveSpeed = 3f;
     public float turnSpeed = 1f;
 
-    public float jumpSpeed = 1f;
-    public float jumpHeight = 1f;
-    public float fallSpeed = 1f;
+    public float jumpSpeed = 3f;
+    public float jumpHeight = 10f;
+    private float targetJumpHeight = 0f;
+    public float fallSpeed = 3f;
 
-    private StateMachine fsm;
     private Camera mainCamera;
     private CinemachineFreeLook cinemachineFreeLook;
-    private Vector3 XYInput;
-    private Vector3 targetDirection;
 
     private bool isOnGound;
+    public bool IsOnGound
+    {
+        get { return isOnGound; }
+    }
+
+    private bool isInAir;
+    public bool IsInAir
+    {
+        get { return isInAir; }
+    }
+
+    private bool isJump;
+    public bool IsJump
+    {
+        get { return isJump; }
+        set { isJump = value; }
+    }
+
+    private bool isFall;
+    public bool IsFall
+    {
+        get { return isFall; }
+        set { isFall = value; }
+    }
+
+    private bool isOnLanding;
+    public bool IsOnLanding
+    {
+        get { return isOnLanding; }
+        set { isOnLanding = value; }
+    }
     
     void Start()
     {
         SetCamera();
-
-        StateMachine SM_Locomotion = new StateMachine(needsExitTime: false);
-        SM_Locomotion.AddState("Idle", new State());
-        SM_Locomotion.AddState("Walk", new State());
-        SM_Locomotion.AddState("Run", new State());
-        SM_Locomotion.AddState("Sprint", new State());
-
-        StateMachine SM_InputAction = new StateMachine(needsExitTime: false);
-        //SM_InputAction.AddState("Evade", new State());
-        SM_InputAction.AddState("Jump", new State(
-            onFocus: (state) => Jump()
-        ));
-        SM_InputAction.AddState("Fall", new State(
-            onFocus: (state) => Fall()
-        ));
-        SM_InputAction.AddState("Land", new State(
-            onFocus: (state) => Fall()
-        ));
-
-        fsm = new StateMachine();
-        fsm.AddState("Locomotion", SM_Locomotion);
-        fsm.AddState("InputAction", SM_InputAction);
-
-        fsm.AddTriggerTransitionFromAny("Input", new Transition(default, "InputAction"));
-        fsm.AddTriggerTransitionFromAny("Locomotion", new Transition(default, "Locomotion"));
-
-        fsm.SetStartState("Locomotion");
-        fsm.Init();
-    }
-
-    void Update()
-    {
-        TransformInput();
-        fsm.OnFocus();
     }
 
     private void SetCamera()
@@ -70,16 +63,7 @@ public class PlayerController : MonoBehaviour
         cinemachineFreeLook = CameraManager.Instance.GetVCamera();
     }
 
-    public StateMachine GetFSM()
-    { return fsm; }
-
-    private void FixedUpdate()
-    {
-        Turn();
-        Move();
-    }
-
-    public void TransformInput()
+    public Vector3 TransformRawXYInput()
     {
         switch (CameraManager.Instance.GetCameraMode())
         {
@@ -88,48 +72,95 @@ public class PlayerController : MonoBehaviour
                 var right = mainCamera.transform.right;
                 //get the forward direction relative to referenceTransform Right
                 var forward = Quaternion.AngleAxis(-90f, Vector3.up) * right;
-                var input = inputController.GetInput();
-                // Debug.Log(input);
+                var rawXYInput = InputController.Instance.GetRawXYInput();
                 // determine the direction the player will face based on input and the referenceTransform's right and forward directions
-                XYInput = (input.x * right) + (input.y * forward);
-                targetDirection = XYInput.normalized;
-                break;
+                return (rawXYInput.x * right) + (rawXYInput.y * forward);
             case CameraManager.ECameraMode.LOCK_ON:
-                break;
+                return new Vector3();
+            default:
+                return new Vector3();
         }
-        animator.SetFloat("XYInputLength", XYInput.magnitude);
     }
 
-    public bool IsOnGround()
+    public void Move(Vector3 xyInput)
     {
-        return isOnGound;
-    }
-
-    private void Move()
-    {
-        var displacement = XYInput * moveSpeed * Time.deltaTime;
+        var displacement = xyInput * moveSpeed * Time.deltaTime;
         transform.position = transform.position + displacement;
     }
 
-    private void Turn()
+    public void Turn(Vector3 targetDirection)
     {
         var targetForward = Vector3.RotateTowards(transform.forward, targetDirection, turnSpeed * Time.deltaTime, 0f);
         transform.rotation = Quaternion.LookRotation(targetForward);
     }
-
-    private void Jump()
+    public void TrySetTriggerJump()
     {
-        if (transform.position.y < jumpHeight)
-            transform.position = transform.position + new Vector3(0f, jumpSpeed * Time.deltaTime, 0f);
-        else
-            fsm.ChangeState("Fall");
+        // todo check can jump
+        if (true)
+        {
+            isJump = true;
+            animator.SetBool("IsJump", true);
+        }
+        animator.SetTrigger("Jump");
+    }
+    public void TryResetTriggerJump()
+    {
+        animator.ResetTrigger("Jump");
     }
 
-    private void Fall()
+    public void OnJumpEnter()
     {
-        if (isOnGound)
-            fsm.ChangeState("Land");
-        if (transform.position.y > 0f)
-            transform.position = transform.position - new Vector3(0f, fallSpeed * Time.deltaTime, 0f);
+        targetJumpHeight = transform.position.y + jumpHeight;
+    }
+
+    public void OnJumpUpdate()
+    {
+        var displacement = Vector3.up * jumpSpeed * Time.deltaTime;
+        transform.position = transform.position + displacement;
+    }
+
+    public void TriggerFall()
+    {
+        isFall = true;
+        animator.SetBool("IsFall", true);
+        animator.SetTrigger("Fall");
+    }
+
+    public void OnFallUpdate()
+    {
+        var displacement = Vector3.down * fallSpeed * Time.deltaTime;
+        transform.position = transform.position + displacement;
+        Debug.Log("OnFallUpdate");
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("Land"))
+        {
+            isOnGound = true;
+            if (isFall)
+            {
+                Debug.Log("Landing");
+                isOnLanding = true;
+                animator.SetBool("IsOnLanding", true);
+                animator.SetTrigger("Landing");
+            }
+        }
+        else if (other.gameObject.layer == LayerMask.NameToLayer("Ceiling"))
+        {
+            if (isJump)
+            {
+                TriggerFall();
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.layer == LayerMask.NameToLayer("Land"))
+        {
+            isOnGound = false;
+            animator.ResetTrigger("Landing");
+        }
     }
 }

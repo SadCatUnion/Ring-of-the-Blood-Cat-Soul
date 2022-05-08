@@ -3,8 +3,8 @@ stateDiagram-v2
 
 [*] --> Ground
 Ground --> Air : Locomotion Constraint
-Air --> Land : Land Detection
-Land --> Ground
+Air --> Landing : Landing Detection
+Landing --> Ground
 
 state Ground {
     [*] --> Locomotion
@@ -46,7 +46,7 @@ state Air {
     AirAttack --> [*]
 }
 
-state Land {
+state Landing {
     direction LR
     [*] --> [*]
 }
