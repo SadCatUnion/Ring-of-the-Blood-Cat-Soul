@@ -107,7 +107,7 @@ namespace KCC
         [Header("Grounding Settings")]
         public float groundDetectionExtraDistance = 0f;
         [Range(0f, 89f)]
-        public float maxSlopeAngle = 60f;
+        public float maxStableSlopeAngle = 60f;
         public LayerMask groundLayers = -1;
         public bool discreteCollisionEvents = false;
 
@@ -152,15 +152,16 @@ namespace KCC
         }
         public Quaternion transientRotation
         {
-            get { return transientRotation; }
+            get { return _transientRotation; }
             private set
             {
-                transientRotation  = value;
-                characterUp        = transientRotation * Vector3.up;
-                characterForward   = transientRotation * Vector3.forward;
-                characterRight     = transientRotation * Vector3.right;
+                _transientRotation = value;
+                characterUp        = _transientRotation * Vector3.up;
+                characterForward   = _transientRotation * Vector3.forward;
+                characterRight     = _transientRotation * Vector3.right;
             }
         }
+        private Quaternion _transientRotation;
         public Vector3 velocity
         {
             get { return baseVelocity + attachedRigidbodyVelocity; }
@@ -267,7 +268,12 @@ namespace KCC
 
         // Constants
         public const int maxCollisionBudget = 16;
+        public const int maxGroundingSweepIterations = 2;
+        public const int maxSteppingSweepIterations = 3;
         public const int maxRigidbodyOverlapsCount = 16;
+        public const float collisionOffset = 0.01f;
+        public const float minGroundProbingDistance = 0.005f;
+        public const float minVelocityMagnitude = 0.01f;
 
         private void OnEnable()
         {
@@ -498,11 +504,92 @@ namespace KCC
 
             if (interactiveRigidbodyHandling)
             {
-                
+
             }
         }
         public void UpdatePhase2(float deltaTime)
-        {}
+        {
+            characterController.UpdateRotation(ref _transientRotation, deltaTime);
+            //transientRotation = _transientRotation;
+
+            if (moveRotationDirty)
+            {
+                transientRotation = moveRotationTarget;
+                moveRotationDirty = false;
+            }
+
+            if (solveMovementCollision && interactiveRigidbodyHandling)
+            {
+
+            }
+
+            characterController.UpdateVelocity(ref baseVelocity, deltaTime);
+
+            if (baseVelocity.magnitude < minVelocityMagnitude)
+            {
+                baseVelocity = Vector3.zero;
+            }
+
+            if (baseVelocity.sqrMagnitude > 0f)
+            {
+                if (solveMovementCollision)
+                {
+                    InternalCharacterMove(ref baseVelocity, deltaTime);
+                }
+                else
+                {
+                    transientPosition += deltaTime * baseVelocity;
+                }
+            }
+
+            if (interactiveRigidbodyHandling)
+            {
+                ProcessVelocityForRigidbodyHits(ref baseVelocity, deltaTime);
+            }
+
+            if (hasPlanarConstraint)
+            {
+                transientPosition = initialSimulationPosition + Vector3.ProjectOnPlane(transientPosition - initialSimulationPosition, planarConstraintAxis.normalized);
+            }
+
+            if (discreteCollisionEvents)
+            {
+                int nbOverlaps = CharacterCollisionOverlap(transientPosition, transientRotation, probedColliders, 2f * collisionOffset);
+                for (int i = 0; i < nbOverlaps; i++)
+                {
+                    characterController.OnDiscreteCollisionDetected(probedColliders[i]);
+                }
+            }
+
+            characterController.AfterCharacterUpdate(deltaTime);
+        }
+        // IsStableOnPlane / IsStableOnSlope
+        private bool IsStableOnNormal(Vector3 normal)
+        {
+            return Vector3.Angle(characterUp, normal) <= maxStableSlopeAngle;
+        }
+        public void ProbeGround(ref Vector3 probingPosition, Quaternion atRotation, float probingDistance, ref CharacterGroundingReport groundingReport)
+        {
+            probingDistance = Mathf.Max(probingDistance, minGroundProbingDistance);
+            int groundSweepsMade = 0;
+            RaycastHit groundSweepHit = new RaycastHit();
+            bool groundSweepingIsOver = false;
+            Vector3 groundSweepPosition = probingPosition;
+            Vector3 groundSweepDirection = atRotation * Vector3.down;
+            float groundProbeDistanceRemaining = probingDistance;
+            while (groundProbeDistanceRemaining > 0f && groundSweepsMade <= maxGroundingSweepIterations && !groundSweepingIsOver)
+            {
+                if (CharacterGroundSweep(groundSweepPosition, atRotation, groundSweepDirection, groundProbeDistanceRemaining, out groundSweepHit))
+                {
+
+                }
+                else
+                {
+                    groundSweepingIsOver = true;
+                }
+                groundSweepsMade++;
+            }
+        }
         public bool MustUnground()
         {
             return mustUnground || mustUngroundTimeCounter > 0f;
@@ -522,6 +609,13 @@ namespace KCC
         public int CharacterCollisionOverlap(Vector3 position, Quaternion rotation, Collider[] overlappedColliders, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
         {
             return 1;
+        }
+        private bool CharacterGroundSweep(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit closestHit)
+        {
+            closestHit = new RaycastHit();
+
+            bool foundValidHit = false;
+            return foundValidHit;
         }
     }
 }
