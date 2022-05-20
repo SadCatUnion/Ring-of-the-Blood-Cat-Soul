@@ -87,6 +87,27 @@ namespace KCC
         }
     }
 
+    public struct HitStabilityReport
+    {
+        public bool isStable;
+
+        public bool foundInnerNormal;
+        public Vector3 innerNormal;
+        public bool foundOuterNormal;
+        public Vector3 outerNormal;
+
+        public bool validStepDetected;
+        public Collider steppedCollider;
+
+        public bool ledgeDetected;
+        public bool isOnEmptySideOfLedge;
+        public float distanceFromLedge;
+        public bool isMovingTowardsEmptySideOfLedge;
+        public Vector3 ledgeGroundNormal;
+        public Vector3 ledgeRightDirection;
+        public Vector3 ledgeFacingDirection;
+    }
+
     [RequireComponent(typeof(CapsuleCollider))]
     public class KinematicCharacterMotor : MonoBehaviour
     {
@@ -108,7 +129,7 @@ namespace KCC
         public float groundDetectionExtraDistance = 0f;
         [Range(0f, 89f)]
         public float maxStableSlopeAngle = 60f;
-        public LayerMask groundLayers = -1;
+        public LayerMask stableGroundLayers = -1;
         public bool discreteCollisionEvents = false;
 
         [Header("Step Settings")]
@@ -126,6 +147,7 @@ namespace KCC
 
         [Header("Rigidbody Interaction Settings")]
         public bool interactiveRigidbodyHandling = true;
+        public RigidbodyInteractionType rigidbodyInteractionType;
 
         [Header("Constraints Settings")]
         public bool hasPlanarConstraint = false;
@@ -251,6 +273,7 @@ namespace KCC
 
 
         // Private
+        private RaycastHit[] characterHits = new RaycastHit[maxHitsBudget];
         private Collider[] probedColliders = new Collider[maxCollisionBudget];
         private List<Rigidbody> rigidbodiesPushedThisMove = new List<Rigidbody>(16);
         private bool solveMovementCollision = true;
@@ -262,17 +285,21 @@ namespace KCC
         private bool lastSolvedOverlapNormalDirty = false;
         private Vector3 lastSolvedOverlapNormal = Vector3.forward;
         private int rigidbodyProjectionHitCount = 0;
+        private bool isMovingFromAttachedRigidbody = false;
         private bool mustUnground = false;
         private float mustUngroundTimeCounter = 0f;
-        
+
 
         // Constants
+        public const int maxHitsBudget = 16;
         public const int maxCollisionBudget = 16;
         public const int maxGroundingSweepIterations = 2;
         public const int maxSteppingSweepIterations = 3;
         public const int maxRigidbodyOverlapsCount = 16;
         public const float collisionOffset = 0.01f;
         public const float minGroundProbingDistance = 0.005f;
+        public const float groundProbingBackstepDistance = 0.1f;
+        public const float sweepProbingBackstepDistance = 0.002f;
         public const float minVelocityMagnitude = 0.01f;
 
         private void OnEnable()
@@ -581,6 +608,8 @@ namespace KCC
             {
                 if (CharacterGroundSweep(groundSweepPosition, atRotation, groundSweepDirection, groundProbeDistanceRemaining, out groundSweepHit))
                 {
+                    var targetPosition = groundSweepPosition + groundSweepDirection * groundSweepHit.distance;
+                    var groundHitStabilityReport = new HitStabilityReport();
 
                 }
                 else
@@ -589,6 +618,11 @@ namespace KCC
                 }
                 groundSweepsMade++;
             }
+        }
+        public void ForceUnground(float time = 0.1f)
+        {
+            mustUnground = true;
+            mustUngroundTimeCounter = time;
         }
         public bool MustUnground()
         {
@@ -600,21 +634,336 @@ namespace KCC
         }
         private void ProcessVelocityForRigidbodyHits(ref Vector3 processedVelocity, float deltaTime)
         {}
+        public void GetVelocityFromRigidbodyMovement(Rigidbody rigidbody, Vector3 atPoint, float deltaTime, out Vector3 linearVelocity, out Vector3 angularVelocity)
+        {
+            if (deltaTime > 0f)
+            {
+                linearVelocity = rigidbody.velocity;
+                angularVelocity = rigidbody.angularVelocity;
+                if (rigidbody.isKinematic)
+                {
+
+                }
+                if (angularVelocity != Vector3.zero)
+                {
+                    var centerOfRotation = rigidbody.transform.TransformPoint(rigidbody.centerOfMass);
+                    var centerOfRotationToPoint = atPoint - centerOfRotation;
+                    var rotationFromRigidbody = Quaternion.Euler(Mathf.Rad2Deg * angularVelocity * deltaTime);
+                    var finalPointPosition = centerOfRotation + (rotationFromRigidbody * centerOfRotationToPoint);
+                    linearVelocity += (finalPointPosition - atPoint) / deltaTime;
+                }
+            }
+            else
+            {
+                linearVelocity = default;
+                angularVelocity = default;
+            }
+        }
+        private Rigidbody GetInteractiveRigidbody(Collider collider)
+        {
+            Rigidbody colliderAttachedRigdibody = collider.attachedRigidbody;
+            if (colliderAttachedRigdibody)
+            {
+                if (colliderAttachedRigdibody.gameObject.GetComponent<PhysicsMover>() || !colliderAttachedRigdibody.isKinematic)
+                {
+                    return colliderAttachedRigdibody;
+                }
+            }
+            return null;
+        }
+        public Vector3 GetVelocityFromPosition(Vector3 from, Vector3 to, float deltaTime)
+        {
+            return GetVelocityFromMovement(to - from, deltaTime);
+        }
         public Vector3 GetVelocityFromMovement(Vector3 movement, float deltaTime)
         {
             if (deltaTime <= 0f)
                 return Vector3.zero;
             return movement / deltaTime;
         }
-        public int CharacterCollisionOverlap(Vector3 position, Quaternion rotation, Collider[] overlappedColliders, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
+        private void ConstraintVectorToPlane(ref Vector3 vector, Vector3 plane)
         {
-            return 1;
+            if (vector.x > 0 != plane.x > 0)
+            {
+                vector.x = 0;
+            }
+            if (vector.y > 0 != plane.y > 0)
+            {
+                vector.y = 0;
+            }
+            if (vector.z > 0 != plane.z > 0)
+            {
+                vector.z = 0;
+            }
+        }
+        private bool CheckIfColliderValidForCollisions(Collider collider)
+        {
+            if (collider == capsuleCollider)
+            {
+                return false;
+            }
+
+            var colliderAttachedRigidbody = collider.attachedRigidbody;
+            
+            if (colliderAttachedRigidbody)
+            {
+                bool isRigidbodyKinematic = colliderAttachedRigidbody.isKinematic;
+
+                if (isMovingFromAttachedRigidbody && (!isRigidbodyKinematic || colliderAttachedRigidbody == attachedRigidbody))
+                {
+                    return false;
+                }
+                if (rigidbodyInteractionType == RigidbodyInteractionType.Kinematic && !isRigidbodyKinematic)
+                {
+                    colliderAttachedRigidbody.WakeUp();
+                    return false;
+                }
+            }
+
+            if (!characterController.IsColliderValidForCollisions(collider))
+            {
+                return false;
+            }
+            
+            return true;
+        }
+        public void EvaluateHitStability(Collider collider, Vector3 normal, Vector3 point, Vector3 atCharacterPosition, Quaternion atCharacterRotation, Vector3 withCharacterVelocity, ref HitStabilityReport hitStabilityReport)
+        public bool CharacterCollisionsOverlap(Vector3 position, Quaternion rotation, Collider[] overlappedColliders, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
+        {
+            LayerMask layerMask = collidableLayers;
+            if (acceptOnlyStableGroundLayer)
+            {
+                layerMask &= stableGroundLayers;
+            }
+            Vector3 bottom = position + (rotation * characterTransformToCapsuleBottomHemi);
+            Vector3 top = position + (rotation * characterTransformToCapsuleTopHemi);
+            if (inflate > 0f)
+            {
+                bottom += rotation * Vector3.down * inflate;
+                top += rotation * Vector3.up * inflate;
+            }
+            Physics.OverlapCapsuleNonAlloc(
+                bottom,
+                top,
+                capsuleCollider.radius + inflate,
+                overlappedColliders,
+                layerMask,
+                QueryTriggerInteraction.Ignore
+            );
+            foreach (var collider in overlappedColliders)
+            {
+                if (CheckIfColliderValidForCollisions(collider))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public bool CharacterOverlap(Vector3 position, Quaternion rotation, Collider[] overlappedColliders, LayerMask layerMask, QueryTriggerInteraction queryTriggerInteraction, float inflate = 0f)
+        {
+            Vector3 bottom = position + rotation * characterTransformToCapsuleBottomHemi;
+            Vector3 top = position + rotation * characterTransformToCapsuleTopHemi;
+            if (inflate > 0f)
+            {
+                bottom += rotation * Vector3.down * inflate;
+                top += rotation * Vector3.up * inflate;
+            }
+            Physics.OverlapCapsuleNonAlloc(
+                bottom,
+                top,
+                capsuleCollider.radius + inflate,
+                overlappedColliders,
+                layerMask,
+                queryTriggerInteraction
+            );
+            foreach (var collider in overlappedColliders)
+            {
+                if (collider != capsuleCollider)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public bool CharacterCollisionsSweep(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
+        {
+            var layerMask = collidableLayers;
+            if (acceptOnlyStableGroundLayer)
+            {
+                layerMask &= stableGroundLayers;
+            }
+            Vector3 bottom = position + (rotation * characterTransformToCapsuleBottomHemi) - (direction * sweepProbingBackstepDistance);
+            Vector3 top = position + (rotation * characterTransformToCapsuleTopHemi) - (direction * sweepProbingBackstepDistance);
+            if (inflate != 0f)
+            {
+                bottom += rotation * Vector3.down * inflate;
+                top += rotation * Vector3.up * inflate;
+            }
+            Physics.CapsuleCastNonAlloc(
+                bottom,
+                top,
+                capsuleCollider.radius + inflate,
+                direction,
+                hits,
+                distance + sweepProbingBackstepDistance,
+                layerMask,
+                QueryTriggerInteraction.Ignore
+            );
+
+            closestHit = new RaycastHit();
+
+            float closestHitDistance = Mathf.Infinity;
+
+            bool foundValidHit = false;
+
+            foreach (var hit in hits)
+            {
+                float hitDistance = hit.distance;
+
+                if (hitDistance > 0f && CheckIfColliderValidForCollisions(hit.collider))
+                {
+                    if (hitDistance < closestHitDistance)
+                    {
+                        closestHit = hit;
+                        closestHit.distance -= sweepProbingBackstepDistance;
+                        closestHitDistance = hitDistance;
+
+                        if (!foundValidHit)
+                        {
+                            foundValidHit = true;
+                        }
+                    }
+                }
+            }
+            return foundValidHit;
+        }
+        public bool CharacterSweep(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, LayerMask layerMask, QueryTriggerInteraction queryTriggerInteraction, float inflate = 0f)
+        {
+            Vector3 bottom = position + (rotation * characterTransformToCapsuleBottomHemi);
+            Vector3 top = position + (rotation * characterTransformToCapsuleTopHemi);
+            if (inflate != 0f)
+            {
+                bottom += rotation * Vector3.down * inflate;
+                top += rotation * Vector3.up * inflate;
+            }
+            Physics.CapsuleCastNonAlloc(
+                bottom,
+                top,
+                capsuleCollider.radius + inflate,
+                direction,
+                hits,
+                distance,
+                layerMask,
+                queryTriggerInteraction
+            );
+
+            closestHit = new RaycastHit();
+
+            float closestHitDistance = Mathf.Infinity;
+
+            bool foundValidHit = false;
+
+            foreach (var hit in hits)
+            {
+                float hitDistance = hit.distance;
+
+                if (hitDistance > 0f && hit.collider != capsuleCollider)
+                {
+                    if (hitDistance < closestHitDistance)
+                    {
+                        closestHit = hit;
+                        closestHitDistance = hitDistance;
+
+                        if (!foundValidHit)
+                        {
+                            foundValidHit = true;
+                        }
+                    }
+                }
+            }
+            return foundValidHit;
         }
         private bool CharacterGroundSweep(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit closestHit)
         {
+            Physics.CapsuleCastNonAlloc(
+                position + (rotation * characterTransformToCapsuleBottomHemi) - (direction * groundProbingBackstepDistance),
+                position + (rotation * characterTransformToCapsuleTopHemi) - (direction * groundProbingBackstepDistance),
+                capsuleCollider.radius,
+                direction,
+                characterHits,
+                distance + groundProbingBackstepDistance,
+                collidableLayers & stableGroundLayers,
+                QueryTriggerInteraction.Ignore
+            );
+
             closestHit = new RaycastHit();
+            
+            float closestHitDistance = Mathf.Infinity;
 
             bool foundValidHit = false;
+
+            foreach (var hit in characterHits)
+            {
+                float hitDistance = hit.distance;
+
+                if (hitDistance > 0f && CheckIfColliderValidForCollisions(hit.collider))
+                {
+                    if (hitDistance < closestHitDistance)
+                    {
+                        closestHit = hit;
+                        closestHit.distance -= groundProbingBackstepDistance;
+                        closestHitDistance = hitDistance;
+
+                        if (!foundValidHit)
+                        {
+                            foundValidHit = true;
+                        }
+                    }
+                }
+            }
+            return foundValidHit;
+        }
+        public bool CharacterCollisionsRaycast(Vector3 origin, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, bool acceptOnlyStableGroundLayer = false)
+        {
+            LayerMask layerMask = collidableLayers;
+            if (acceptOnlyStableGroundLayer)
+            {
+                layerMask &= stableGroundLayers;
+            }
+
+            Physics.RaycastNonAlloc(
+                origin,
+                direction,
+                hits,
+                distance,
+                layerMask,
+                QueryTriggerInteraction.Ignore
+            );
+            
+            closestHit = new RaycastHit();
+
+            float closestHitDistance = Mathf.Infinity;
+
+            bool foundValidHit = false;
+
+            foreach (var hit in hits)
+            {
+                float hitDistance = hit.distance;
+
+                if (hitDistance > 0f && CheckIfColliderValidForCollisions(hit.collider))
+                {
+                    if (hitDistance < closestHitDistance)
+                    {
+                        closestHit = hit;
+                        closestHitDistance = hitDistance;
+
+                        if (!foundValidHit)
+                        {
+                            foundValidHit = true;
+                        }
+                    }
+                }
+            }
             return foundValidHit;
         }
     }

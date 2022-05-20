@@ -11,6 +11,7 @@ namespace KCC
         void BeforeCharacterUpdate(float deltaTime);
         void PostGroundingUpdate(float deltaTime);
         void AfterCharacterUpdate(float deltaTime);
+        bool IsColliderValidForCollisions(Collider collider);
         void OnDiscreteCollisionDetected(Collider collider);
     }
 }
