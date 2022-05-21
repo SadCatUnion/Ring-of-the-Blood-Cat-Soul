@@ -12,6 +12,7 @@ namespace KCC
         void PostGroundingUpdate(float deltaTime);
         void AfterCharacterUpdate(float deltaTime);
         bool IsColliderValidForCollisions(Collider collider);
+        void OnGroundHit(Collider collider, Vector3 normal, Vector3 point, ref HitStabilityReport hitStabilityReport);
         void OnDiscreteCollisionDetected(Collider collider);
     }
 }
