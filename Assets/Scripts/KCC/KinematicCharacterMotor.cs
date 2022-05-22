@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace KCC
 {
+    #region Enum
     public enum RigidbodyInteractionType
     {
         None,
@@ -24,6 +25,9 @@ namespace KCC
         FoundBlockingCrease,
         FoundBlockingCorner,
     }
+    #endregion
+
+    #region Struct
     [Serializable]
     public struct KinematicCharacterMotorState
     {
@@ -121,6 +125,8 @@ namespace KCC
         public Vector3 hitVelocity;
         public bool stableOnHit;
     }
+    #endregion
+    
     [RequireComponent(typeof(CapsuleCollider))]
     public class KinematicCharacterMotor : MonoBehaviour
     {
@@ -228,7 +234,7 @@ namespace KCC
         public Vector3 baseVelocity;
 
 
-        // Private
+        #region Private
         private RaycastHit[] characterHits = new RaycastHit[maxHitsBudget];
         private Collider[] probedColliders = new Collider[maxCollisionBudget];
         private List<Rigidbody> rigidbodiesPushedThisMove = new List<Rigidbody>(16);
@@ -245,9 +251,9 @@ namespace KCC
         private bool isMovingFromAttachedRigidbody = false;
         private bool mustUnground = false;
         private float mustUngroundTimeCounter = 0f;
+        #endregion
 
-
-        // Constants
+        #region Constants
         public const int maxHitsBudget = 16;
         public const int maxCollisionBudget = 16;
         public const int maxGroundingSweepIterations = 2;
@@ -258,6 +264,9 @@ namespace KCC
         public const float groundProbingBackstepDistance = 0.1f;
         public const float sweepProbingBackstepDistance = 0.002f;
         public const float minVelocityMagnitude = 0.01f;
+        public const float steppingForwardDistance = 0.03f;
+        public const float correlationForVerticalObstruction = 0.01f;
+        #endregion
 
         private void OnEnable()
         {
@@ -661,7 +670,232 @@ namespace KCC
         }
         private bool InternalCharacterMove(ref Vector3 transientVelocity, float deltaTime)
         {
-            return true;
+            if (deltaTime <= 0f)
+            {
+                return false;
+            }
+
+            var wasCompleted = true;
+            var remainingMovementDirection = transientVelocity.normalized;
+            var remainingMovementMagnitude = transientVelocity.magnitude * deltaTime;
+            var originalVelocityDirection = remainingMovementDirection;
+            var sweepsMade = 0;
+            var hitSomethingThisSweepIteration = true;
+            var tmpMovedPosition = transientPosition;
+            var previousHitIsStable = false;
+            var previousVelocity = Vector3.zero;
+            var previousObstructionNormal = Vector3.zero;
+            var sweepState = MovementSweepState.Initial;
+
+            for (int i = 0; i < overlapsCount; i++)
+            {
+                var overlapNormal = overlaps[i].normal;
+                if (Vector3.Dot(remainingMovementDirection, overlapNormal) < 0f)
+                {
+                    var stableOnHit = IsStableOnNormal(overlapNormal) && !MustUnground();
+                    var velocityBeforeProjection = transientVelocity;
+                    var obstructionNormal = GetObstructionNormal(overlapNormal, stableOnHit);
+                    InternalHandleVelocityProjection(
+                        stableOnHit,
+                        overlapNormal,
+                        obstructionNormal,
+                        originalVelocityDirection,
+                        ref sweepState,
+                        previousHitIsStable,
+                        previousVelocity,
+                        previousObstructionNormal,
+                        ref transientVelocity,
+                        ref remainingMovementMagnitude,
+                        ref remainingMovementDirection
+                    );
+                    previousHitIsStable = stableOnHit;
+                    previousVelocity = velocityBeforeProjection;
+                    previousObstructionNormal = obstructionNormal;
+                }
+            }
+
+            while (remainingMovementMagnitude > 0f && sweepsMade <= maxMovementIterations && hitSomethingThisSweepIteration)
+            {
+                var foundClosestHit = false;
+                Vector3 closestSweepHitPoint = default;
+                Vector3 closestSweepHitNormal = default;
+                var closestSweepHitDistance = 0f;
+                Collider closestSweepHitCollider = null;
+
+                if (checkMovementInitialOverlaps)
+                {
+                    var overlapCount = CharacterCollisionsOverlap(
+                        tmpMovedPosition,
+                        transientRotation,
+                        probedColliders
+                    );
+                    if (overlapCount > 0)
+                    {
+                        closestSweepHitDistance = 0f;
+                        var mostObstructingOverlapNormalDotProduct = 2f;
+                        for (int i = 0; i < overlapCount; i++)
+                        {
+                            var tmpCollider = probedColliders[i];
+                            if (Physics.ComputePenetration(
+                                capsuleCollider,
+                                tmpMovedPosition,
+                                transientRotation,
+                                tmpCollider,
+                                tmpCollider.transform.position,
+                                tmpCollider.transform.rotation,
+                                out var resolutionDirection,
+                                out var resolutionDistance
+                            ))
+                            {
+                                var dotProduct = Vector3.Dot(remainingMovementDirection, resolutionDirection);
+                                if (dotProduct < 0f && dotProduct < mostObstructingOverlapNormalDotProduct)
+                                {
+                                    mostObstructingOverlapNormalDotProduct = dotProduct;
+                                    closestSweepHitNormal = resolutionDirection;
+                                    closestSweepHitCollider = tmpCollider;
+                                    closestSweepHitPoint = tmpMovedPosition + transientRotation * capsuleCollider.center + resolutionDirection * resolutionDistance;
+                                    if (!foundClosestHit)
+                                    {
+                                        foundClosestHit = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!foundClosestHit && CharacterCollisionsSweep(
+                    tmpMovedPosition,
+                    transientRotation,
+                    remainingMovementDirection,
+                    remainingMovementMagnitude + collisionOffset,
+                    out var closestSweepHit,
+                    characterHits
+                ) > 0)
+                {
+                    closestSweepHitNormal = closestSweepHit.normal;
+                    closestSweepHitDistance = closestSweepHit.distance;
+                    closestSweepHitCollider = closestSweepHit.collider;
+                    closestSweepHitPoint = closestSweepHit.point;
+                    foundClosestHit = true;
+                }
+                
+                if (foundClosestHit)
+                {
+                    var sweepMovement = remainingMovementDirection * Mathf.Max(0f, closestSweepHitDistance - collisionOffset);
+                    tmpMovedPosition += sweepMovement;
+                    remainingMovementMagnitude -= sweepMovement.magnitude;
+
+                    var moveHitStabilityReport = new HitStabilityReport();
+                    EvaluateHitStability(
+                        closestSweepHitCollider,
+                        closestSweepHitNormal,
+                        closestSweepHitPoint,
+                        tmpMovedPosition,
+                        transientRotation,
+                        transientVelocity,
+                        ref moveHitStabilityReport
+                    );
+
+                    var foundValidStepHit = false;
+                    if (solveGrounding && stepHandling != StepHandlingMethod.None && moveHitStabilityReport.validStepDetected)
+                    {
+                        var obstructionCorrelation = Mathf.Abs(Vector3.Dot(closestSweepHitNormal, characterUp));
+                        if (obstructionCorrelation <= correlationForVerticalObstruction)
+                        {
+                            var stepForwardDirection = Vector3.ProjectOnPlane(-closestSweepHitNormal, characterUp).normalized;
+                            var stepCastStartPoint = tmpMovedPosition + stepForwardDirection * steppingForwardDistance + characterUp * maxStepHeight;
+                            var stepHitCount = CharacterCollisionsSweep(
+                                stepCastStartPoint,
+                                transientRotation,
+                                -characterUp,
+                                maxStepHeight,
+                                out var closestStepHit,
+                                characterHits,
+                                0f,
+                                true
+                            );
+                            for (int i = 0; i < stepHitCount; i++)
+                            {
+                                var hit = characterHits[i];
+                                if (hit.collider == moveHitStabilityReport.steppedCollider)
+                                {
+                                    var endStepPosition = stepCastStartPoint + (-characterUp * (hit.distance - collisionOffset));
+                                    tmpMovedPosition = endStepPosition;
+                                    foundValidStepHit = true;
+
+                                    transientVelocity = Vector3.ProjectOnPlane(transientVelocity, characterUp);
+                                    remainingMovementDirection = transientVelocity.normalized;
+
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    if (!foundValidStepHit)
+                    {
+                        var obstructionNormal = GetObstructionNormal(closestSweepHitNormal, moveHitStabilityReport.isStable);
+
+                        characterController.OnMovementHit(closestSweepHitCollider, closestSweepHitNormal, closestSweepHitPoint, ref moveHitStabilityReport);
+
+                        if (interactiveRigidbodyHandling && closestSweepHitCollider.attachedRigidbody)
+                        {
+                            StoreRigidbodyHit(
+                                closestSweepHitCollider.attachedRigidbody,
+                                transientVelocity,
+                                closestSweepHitPoint,
+                                obstructionNormal,
+                                moveHitStabilityReport
+                            );
+                        }
+
+                        var stableOnHit = moveHitStabilityReport.isStable && !MustUnground();
+                        var velocityBeforeProjection = transientVelocity;
+
+                        InternalHandleVelocityProjection(
+                            stableOnHit,
+                            closestSweepHitNormal,
+                            obstructionNormal,
+                            originalVelocityDirection,
+                            ref sweepState,
+                            previousHitIsStable,
+                            previousVelocity,
+                            previousObstructionNormal,
+                            ref transientVelocity,
+                            ref remainingMovementMagnitude,
+                            ref remainingMovementDirection
+                        );
+                        previousHitIsStable = stableOnHit;
+                        previousVelocity = velocityBeforeProjection;
+                        previousObstructionNormal = obstructionNormal;
+                    }
+                    
+                }
+                else
+                {
+                    hitSomethingThisSweepIteration = false;
+                }
+
+                sweepsMade++;
+                if (sweepsMade > maxMovementIterations)
+                {
+                    if (killRemainingMovementWhenExceedMaxMovementIterations)
+                    {
+                        remainingMovementMagnitude = 0f;
+                    }
+                    if (killVelocityWhenExceedMaxMovementIterations)
+                    {
+                        transientVelocity = Vector3.zero;
+                    }
+                    wasCompleted = false;
+                }
+            }
+
+            tmpMovedPosition += remainingMovementDirection * remainingMovementMagnitude;
+            transientPosition = tmpMovedPosition;
+
+            return wasCompleted;
         }
         private Vector3 GetObstructionNormal(Vector3 normal, bool stableOnHit)
         {
@@ -918,7 +1152,7 @@ namespace KCC
         {
 
         }
-        public bool CharacterCollisionsOverlap(Vector3 position, Quaternion rotation, Collider[] overlappedColliders, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
+        public int CharacterCollisionsOverlap(Vector3 position, Quaternion rotation, Collider[] overlappedColliders, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
         {
             LayerMask layerMask = collidableLayers;
             if (acceptOnlyStableGroundLayer)
@@ -932,7 +1166,7 @@ namespace KCC
                 bottom += rotation * Vector3.down * inflate;
                 top += rotation * Vector3.up * inflate;
             }
-            Physics.OverlapCapsuleNonAlloc(
+            var unfilteredHitCount = Physics.OverlapCapsuleNonAlloc(
                 bottom,
                 top,
                 capsuleCollider.radius + inflate,
@@ -940,14 +1174,19 @@ namespace KCC
                 layerMask,
                 QueryTriggerInteraction.Ignore
             );
-            foreach (var collider in overlappedColliders)
+            var hitCount = unfilteredHitCount;
+            for (int i = unfilteredHitCount - 1; i >= 0 ; i--)
             {
-                if (CheckIfColliderValidForCollisions(collider))
+                if (!CheckIfColliderValidForCollisions(overlappedColliders[i]))
                 {
-                    return true;
+                    hitCount--;
+                    if (i < hitCount)
+                    {
+                        overlappedColliders[i] = overlappedColliders[hitCount];
+                    }
                 }
             }
-            return false;
+            return hitCount;
         }
         public bool CharacterOverlap(Vector3 position, Quaternion rotation, Collider[] overlappedColliders, LayerMask layerMask, QueryTriggerInteraction queryTriggerInteraction, float inflate = 0f)
         {
@@ -975,7 +1214,7 @@ namespace KCC
             }
             return false;
         }
-        public bool CharacterCollisionsSweep(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
+        public int CharacterCollisionsSweep(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, float inflate = 0f, bool acceptOnlyStableGroundLayer = false)
         {
             var layerMask = collidableLayers;
             if (acceptOnlyStableGroundLayer)
@@ -989,7 +1228,7 @@ namespace KCC
                 bottom += rotation * Vector3.down * inflate;
                 top += rotation * Vector3.up * inflate;
             }
-            Physics.CapsuleCastNonAlloc(
+            var unfilteredHitCount = Physics.CapsuleCastNonAlloc(
                 bottom,
                 top,
                 capsuleCollider.radius + inflate,
@@ -999,33 +1238,34 @@ namespace KCC
                 layerMask,
                 QueryTriggerInteraction.Ignore
             );
+            var hitCount = unfilteredHitCount;
 
             closestHit = new RaycastHit();
-
             float closestHitDistance = Mathf.Infinity;
 
-            bool foundValidHit = false;
-
-            foreach (var hit in hits)
+            for (int i = unfilteredHitCount - 1; i >= 0 ; i--)
             {
-                float hitDistance = hit.distance;
-
-                if (hitDistance > 0f && CheckIfColliderValidForCollisions(hit.collider))
+                hits[i].distance -= sweepProbingBackstepDistance;
+                var hit = hits[i];
+                var hitDistance = hit.distance;
+                if (hitDistance <= 0f || !CheckIfColliderValidForCollisions(hit.collider))
+                {
+                    hitCount--;
+                    if (i < hitCount)
+                    {
+                        hits[i] = hits[hitCount];
+                    }
+                }
+                else
                 {
                     if (hitDistance < closestHitDistance)
                     {
                         closestHit = hit;
-                        closestHit.distance -= sweepProbingBackstepDistance;
                         closestHitDistance = hitDistance;
-
-                        if (!foundValidHit)
-                        {
-                            foundValidHit = true;
-                        }
                     }
                 }
             }
-            return foundValidHit;
+            return hitCount;
         }
         public bool CharacterSweep(Vector3 position, Quaternion rotation, Vector3 direction, float distance, out RaycastHit closestHit, RaycastHit[] hits, LayerMask layerMask, QueryTriggerInteraction queryTriggerInteraction, float inflate = 0f)
         {
